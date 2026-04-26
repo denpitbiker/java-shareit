@@ -4,7 +4,6 @@ import org.springframework.stereotype.Repository;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.shareit.item.model.Item;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
