@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.error.BadRequestException;
 import ru.practicum.shareit.error.ForbiddenOperationException;
@@ -15,6 +16,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
     private static final String USER_NOT_FOUND_MESSAGE = "User not found";
@@ -22,12 +24,24 @@ public class ItemServiceImpl implements ItemService {
     private static final String ITEM_OWNER_ONLY_MESSAGE = "Only the owner can update the item";
     private static final String ITEM_NAME_BLANK_MESSAGE = "Item name must not be blank";
     private static final String ITEM_DESCRIPTION_BLANK_MESSAGE = "Item description must not be blank";
+    private static final String LOG_CREATE_ITEM = "Creating item in service for userId={}, itemDto={}";
+    private static final String LOG_UPDATE_ITEM = "Updating item in service: itemId={}, userId={}, itemDto={}";
+    private static final String LOG_GET_ITEM = "Getting item in service by itemId={}";
+    private static final String LOG_GET_OWNER_ITEMS = "Getting owner items in service for userId={}";
+    private static final String LOG_SEARCH_ITEMS = "Searching items in service by text='{}'";
+    private static final String LOG_BLANK_SEARCH = "Search text is blank, returning empty result";
+    private static final String LOG_USER_NOT_FOUND = "User not found for userId={}";
+    private static final String LOG_ITEM_NOT_FOUND = "Item not found for itemId={}";
+    private static final String LOG_OWNER_VALIDATION_FAILED = "UserId={} is not owner of itemId={}";
+    private static final String LOG_NAME_VALIDATION_FAILED = "Item name validation failed: blank value";
+    private static final String LOG_DESCRIPTION_VALIDATION_FAILED = "Item description validation failed: blank value";
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
     @Override
     public ItemDto create(Long userId, ItemDto itemDto) {
+        log.info(LOG_CREATE_ITEM, userId, itemDto);
         User owner = getUserOrThrow(userId);
         Item item = ItemMapper.toItem(itemDto);
         item.setOwner(owner);
@@ -36,6 +50,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto update(Long userId, Long itemId, ItemDto itemDto) {
+        log.info(LOG_UPDATE_ITEM, itemId, userId, itemDto);
         getUserOrThrow(userId);
         Item existingItem = getItemOrThrow(itemId);
         validateOwner(existingItem, userId);
@@ -57,11 +72,13 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getById(Long itemId) {
+        log.info(LOG_GET_ITEM, itemId);
         return ItemMapper.toItemDto(getItemOrThrow(itemId));
     }
 
     @Override
     public List<ItemDto> getOwnerItems(Long userId) {
+        log.info(LOG_GET_OWNER_ITEMS, userId);
         getUserOrThrow(userId);
         return itemRepository.findByOwnerId(userId)
                 .stream()
@@ -71,7 +88,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> search(String text) {
+        log.info(LOG_SEARCH_ITEMS, text);
         if (text == null || text.isBlank()) {
+            log.info(LOG_BLANK_SEARCH);
             return List.of();
         }
         return itemRepository.search(text.trim())
@@ -82,28 +101,37 @@ public class ItemServiceImpl implements ItemService {
 
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> {
+                    log.warn(LOG_USER_NOT_FOUND, userId);
+                    return new NotFoundException(USER_NOT_FOUND_MESSAGE);
+                });
     }
 
     private Item getItemOrThrow(Long itemId) {
         return itemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(ITEM_NOT_FOUND_MESSAGE));
+                .orElseThrow(() -> {
+                    log.warn(LOG_ITEM_NOT_FOUND, itemId);
+                    return new NotFoundException(ITEM_NOT_FOUND_MESSAGE);
+                });
     }
 
     private void validateOwner(Item item, Long userId) {
         if (!item.getOwner().getId().equals(userId)) {
+            log.warn(LOG_OWNER_VALIDATION_FAILED, userId, item.getId());
             throw new ForbiddenOperationException(ITEM_OWNER_ONLY_MESSAGE);
         }
     }
 
     private void validateName(String name) {
         if (name.isBlank()) {
+            log.warn(LOG_NAME_VALIDATION_FAILED);
             throw new BadRequestException(ITEM_NAME_BLANK_MESSAGE);
         }
     }
 
     private void validateDescription(String description) {
         if (description.isBlank()) {
+            log.warn(LOG_DESCRIPTION_VALIDATION_FAILED);
             throw new BadRequestException(ITEM_DESCRIPTION_BLANK_MESSAGE);
         }
     }
