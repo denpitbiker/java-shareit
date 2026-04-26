@@ -38,7 +38,6 @@ public class InMemoryItemRepository implements ItemRepository {
         return items.values()
                 .stream()
                 .filter(item -> item.getOwner() != null && item.getOwner().getId().equals(ownerId))
-                .sorted(Comparator.comparing(Item::getId))
                 .toList();
     }
 
@@ -50,7 +49,6 @@ public class InMemoryItemRepository implements ItemRepository {
                 .filter(Item::getAvailable)
                 .filter(item -> containsIgnoreCase(item.getName(), normalizedText)
                         || containsIgnoreCase(item.getDescription(), normalizedText))
-                .sorted(Comparator.comparing(Item::getId))
                 .toList();
     }
 

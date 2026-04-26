@@ -21,28 +21,28 @@ public class ErrorHandler {
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    public Map<String, String> handleBadRequest(Exception exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponseDto handleBadRequest(Exception exception) {
+        return new ErrorResponseDto(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
-    public Map<String, String> handleNotFound(NotFoundException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponseDto handleNotFound(NotFoundException exception) {
+        return new ErrorResponseDto(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     @ResponseBody
-    public Map<String, String> handleConflict(ConflictException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponseDto handleConflict(ConflictException exception) {
+        return new ErrorResponseDto(exception.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ResponseBody
-    public Map<String, String> handleForbidden(ForbiddenOperationException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponseDto handleForbidden(ForbiddenOperationException exception) {
+        return new ErrorResponseDto(exception.getMessage());
     }
 }
