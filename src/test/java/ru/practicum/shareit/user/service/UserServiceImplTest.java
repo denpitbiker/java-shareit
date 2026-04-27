@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.shareit.ShareItApp;
-import ru.practicum.shareit.error.BadRequestException;
 import ru.practicum.shareit.error.ConflictException;
 import ru.practicum.shareit.error.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
