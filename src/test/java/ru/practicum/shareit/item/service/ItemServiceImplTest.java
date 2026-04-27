@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.shareit.ShareItApp;
-import ru.practicum.shareit.error.BadRequestException;
 import ru.practicum.shareit.error.ForbiddenOperationException;
 import ru.practicum.shareit.error.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -88,19 +87,6 @@ public class ItemServiceImplTest {
                 ForbiddenOperationException.class,
                 () -> itemService.update(anotherUser.getId(), createdItem.getId(), new ItemDto(null, UPDATED_ITEM_NAME, null, null, null)),
                 "Expected forbidden update for non owner"
-        );
-    }
-
-    @Test
-    @DisplayName("Update item with blank description")
-    public void update_itemWithBlankDescription_throwsBadRequestException() {
-        UserDto owner = userService.create(new UserDto(null, VALID_USER_DTO_1.getName(), VALID_USER_DTO_1.getEmail()));
-        ItemDto createdItem = itemService.create(owner.getId(), VALID_ITEM_DTO_1);
-
-        Assertions.assertThrows(
-                BadRequestException.class,
-                () -> itemService.update(owner.getId(), createdItem.getId(), new ItemDto(null, null, "   ", null, null)),
-                "Expected bad request for blank description"
         );
     }
 

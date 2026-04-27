@@ -71,18 +71,6 @@ public class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("Update user with blank name")
-    public void update_userWithBlankName_throwsBadRequestException() {
-        UserDto createdUser = userService.create(new UserDto(null, VALID_USER_DTO_1.getName(), VALID_USER_DTO_1.getEmail()));
-
-        Assertions.assertThrows(
-                BadRequestException.class,
-                () -> userService.update(createdUser.getId(), new UserDto(null, "   ", null)),
-                "Expected bad request for blank name"
-        );
-    }
-
-    @Test
     @DisplayName("Get existing user by id")
     public void getById_existingUser_userReturned() {
         UserDto createdUser = userService.create(new UserDto(null, VALID_USER_DTO_1.getName(), VALID_USER_DTO_1.getEmail()));

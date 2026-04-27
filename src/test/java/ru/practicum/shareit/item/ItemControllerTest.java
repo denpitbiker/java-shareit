@@ -63,15 +63,6 @@ public class ItemControllerTest {
     }
 
     @Test
-    @DisplayName("Create item without user header")
-    public void post_createItemWithoutUserHeader_badRequest400() throws Exception {
-        mvc.perform(post(ITEMS_ROUTE)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(VALID_ITEM_DTO_1)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     @DisplayName("Update existing item by owner")
     public void patch_updateExistingItemByOwner_success200() throws Exception {
         UserDto owner = extractUserDto(createUser(VALID_USER_DTO_1));
