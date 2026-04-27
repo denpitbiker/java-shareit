@@ -3,7 +3,6 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.error.BadRequestException;
 import ru.practicum.shareit.error.ForbiddenOperationException;
 import ru.practicum.shareit.error.NotFoundException;
 import ru.practicum.shareit.item.ItemMapper;
@@ -22,8 +21,6 @@ public class ItemServiceImpl implements ItemService {
     private static final String USER_NOT_FOUND_MESSAGE = "User not found";
     private static final String ITEM_NOT_FOUND_MESSAGE = "Item not found";
     private static final String ITEM_OWNER_ONLY_MESSAGE = "Only the owner can update the item";
-    private static final String ITEM_NAME_BLANK_MESSAGE = "Item name must not be blank";
-    private static final String ITEM_DESCRIPTION_BLANK_MESSAGE = "Item description must not be blank";
     private static final String LOG_CREATE_ITEM = "Creating item in service for userId={}, itemDto={}";
     private static final String LOG_UPDATE_ITEM = "Updating item in service: itemId={}, userId={}, itemDto={}";
     private static final String LOG_GET_ITEM = "Getting item in service by itemId={}";
@@ -33,8 +30,6 @@ public class ItemServiceImpl implements ItemService {
     private static final String LOG_USER_NOT_FOUND = "User not found for userId={}";
     private static final String LOG_ITEM_NOT_FOUND = "Item not found for itemId={}";
     private static final String LOG_OWNER_VALIDATION_FAILED = "UserId={} is not owner of itemId={}";
-    private static final String LOG_NAME_VALIDATION_FAILED = "Item name validation failed: blank value";
-    private static final String LOG_DESCRIPTION_VALIDATION_FAILED = "Item description validation failed: blank value";
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -55,12 +50,10 @@ public class ItemServiceImpl implements ItemService {
         Item existingItem = getItemOrThrow(itemId);
         validateOwner(existingItem, userId);
 
-        if (itemDto.getName() != null) {
-            validateName(itemDto.getName());
+        if (validateName(itemDto.getName())) {
             existingItem.setName(itemDto.getName());
         }
-        if (itemDto.getDescription() != null) {
-            validateDescription(itemDto.getDescription());
+        if (validateDescription(itemDto.getDescription())) {
             existingItem.setDescription(itemDto.getDescription());
         }
         if (itemDto.getAvailable() != null) {
@@ -122,17 +115,11 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
-    private void validateName(String name) {
-        if (name.isBlank()) {
-            log.warn(LOG_NAME_VALIDATION_FAILED);
-            throw new BadRequestException(ITEM_NAME_BLANK_MESSAGE);
-        }
+    private boolean validateName(String name) {
+        return name != null && !name.isBlank();
     }
 
-    private void validateDescription(String description) {
-        if (description.isBlank()) {
-            log.warn(LOG_DESCRIPTION_VALIDATION_FAILED);
-            throw new BadRequestException(ITEM_DESCRIPTION_BLANK_MESSAGE);
-        }
+    private boolean validateDescription(String description) {
+        return description != null && !description.isBlank();
     }
 }

@@ -16,7 +16,6 @@ import ru.practicum.shareit.user.repository.UserRepository;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private static final String USER_NOT_FOUND_MESSAGE = "User not found";
-    private static final String USER_NAME_BLANK_MESSAGE = "User name must not be blank";
     private static final String USER_EMAIL_EXISTS_MESSAGE = "Email already exists";
     private static final String USER_EMAIL_INVALID_MESSAGE = "User email must be valid";
     private static final String EMAIL_SEPARATOR = "@";
@@ -26,7 +25,6 @@ public class UserServiceImpl implements UserService {
     private static final String LOG_DELETE_USER = "Deleting user in service by userId={}";
     private static final String LOG_EMAIL_CONFLICT = "Email uniqueness validation failed for email='{}', currentUserId={}";
     private static final String LOG_EMAIL_VALIDATION_FAILED = "Email validation failed for email='{}'";
-    private static final String LOG_NAME_VALIDATION_FAILED = "User name validation failed: blank value";
     private static final String LOG_USER_NOT_FOUND = "User not found for userId={}";
 
     private final UserRepository userRepository;
@@ -44,8 +42,7 @@ public class UserServiceImpl implements UserService {
         log.info(LOG_UPDATE_USER, userId, userDto);
         User existingUser = getUserOrThrow(userId);
 
-        if (userDto.getName() != null) {
-            validateName(userDto.getName());
+        if (validateName(userDto.getName())) {
             existingUser.setName(userDto.getName());
         }
         if (userDto.getEmail() != null) {
@@ -89,11 +86,8 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private void validateName(String name) {
-        if (name.isBlank()) {
-            log.warn(LOG_NAME_VALIDATION_FAILED);
-            throw new BadRequestException(USER_NAME_BLANK_MESSAGE);
-        }
+    private boolean validateName(String name) {
+        return name != null && !name.isBlank();
     }
 
     private User getUserOrThrow(Long userId) {
