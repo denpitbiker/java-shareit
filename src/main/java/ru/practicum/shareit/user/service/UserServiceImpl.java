@@ -3,17 +3,19 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.error.BadRequestException;
 import ru.practicum.shareit.error.ConflictException;
 import ru.practicum.shareit.error.NotFoundException;
-import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class UserServiceImpl implements UserService {
     private static final String USER_NOT_FOUND_MESSAGE = "User not found";
     private static final String USER_EMAIL_EXISTS_MESSAGE = "Email already exists";
@@ -51,10 +53,11 @@ public class UserServiceImpl implements UserService {
             existingUser.setEmail(userDto.getEmail());
         }
 
-        return UserMapper.toUserDto(userRepository.update(existingUser));
+        return UserMapper.toUserDto(userRepository.save(existingUser));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDto getById(Long userId) {
         log.info(LOG_GET_USER, userId);
         return UserMapper.toUserDto(getUserOrThrow(userId));

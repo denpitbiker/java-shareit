@@ -26,6 +26,8 @@ public final class TestStubs {
     public static final String UPDATED_ITEM_DESCRIPTION = "Updated description";
     public static final String SEARCH_TEXT_MATCH = "drill";
     public static final String SEARCH_TEXT_BLANK = "   ";
+    public static final String VALID_COMMENT_TEXT = "Works well";
+    public static final String UPDATED_COMMENT_TEXT = "Still works well";
 
     public static final UserDto VALID_USER_DTO_1 = new UserDto(null, VALID_USER_NAME_1, VALID_EMAIL_1);
     public static final UserDto VALID_USER_DTO_2 = new UserDto(null, VALID_USER_NAME_2, VALID_EMAIL_2);

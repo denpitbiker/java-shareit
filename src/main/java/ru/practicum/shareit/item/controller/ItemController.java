@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,22 +12,25 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.List;
+
+import static ru.practicum.shareit.common.Header.USER_ID_HEADER;
 
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/items")
 public class ItemController {
-    private static final String USER_ID_HEADER = "X-Sharer-User-Id";
     private static final String LOG_CREATE_ITEM = "Creating item for userId={}, itemDto={}";
     private static final String LOG_UPDATE_ITEM = "Updating itemId={} for userId={}, itemDto={}";
     private static final String LOG_GET_ITEM = "Getting item by itemId={}";
     private static final String LOG_GET_OWNER_ITEMS = "Getting items for owner userId={}";
     private static final String LOG_SEARCH_ITEMS = "Searching items by text='{}'";
+    private static final String LOG_ADD_COMMENT = "Adding comment to itemId={} by userId={}, commentDto={}";
 
     private final ItemService itemService;
 
@@ -46,9 +49,10 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getById(@PathVariable Long itemId) {
+    public ItemDto getById(@PathVariable Long itemId,
+                           @RequestHeader(value = USER_ID_HEADER, required = false) Long userId) {
         log.info(LOG_GET_ITEM, itemId);
-        return itemService.getById(itemId);
+        return itemService.getById(itemId, userId);
     }
 
     @GetMapping
@@ -61,5 +65,13 @@ public class ItemController {
     public List<ItemDto> search(@RequestParam String text) {
         log.info(LOG_SEARCH_ITEMS, text);
         return itemService.search(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto addComment(@RequestHeader(USER_ID_HEADER) Long userId,
+                                 @PathVariable Long itemId,
+                                 @Valid @RequestBody CommentDto commentDto) {
+        log.info(LOG_ADD_COMMENT, itemId, userId, commentDto);
+        return itemService.addComment(userId, itemId, commentDto);
     }
 }

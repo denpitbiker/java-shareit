@@ -3,12 +3,15 @@ package ru.practicum.shareit.error;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,9 +67,15 @@ public class ErrorHandler {
         return errors;
     }
 
-    @ExceptionHandler({BadRequestException.class, MissingRequestHeaderException.class})
+    @ExceptionHandler({
+            BadRequestException.class,
+            MissingRequestHeaderException.class,
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class
+    })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponseDto handleBadRequest(BadRequestException e) {
+    public ErrorResponseDto handleBadRequest(Exception e) {
         log.error(VALIDATION_ERR_LOG_MSG, e);
         return new ErrorResponseDto(e.getMessage());
     }
