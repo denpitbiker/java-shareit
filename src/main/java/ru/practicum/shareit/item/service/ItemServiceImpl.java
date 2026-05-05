@@ -153,12 +153,7 @@ public class ItemServiceImpl implements ItemService {
             throw new BadRequestException(COMMENT_FORBIDDEN_MESSAGE);
         }
 
-        Comment comment = Comment.builder()
-                .text(commentDto.getText())
-                .item(item)
-                .author(author)
-                .created(LocalDateTime.now())
-                .build();
+        Comment comment = CommentMapper.toComment(commentDto, item, author, LocalDateTime.now());
 
         return CommentMapper.toCommentDto(commentRepository.save(comment));
     }

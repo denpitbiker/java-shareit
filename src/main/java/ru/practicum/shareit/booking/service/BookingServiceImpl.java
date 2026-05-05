@@ -62,13 +62,7 @@ public class BookingServiceImpl implements BookingService {
         }
         validateDates(bookingDto.getStart(), bookingDto.getEnd());
 
-        Booking booking = Booking.builder()
-                .start(bookingDto.getStart())
-                .end(bookingDto.getEnd())
-                .item(item)
-                .booker(booker)
-                .status(BookingStatus.WAITING)
-                .build();
+        Booking booking = BookingMapper.toBooking(bookingDto, booker, item, BookingStatus.WAITING);
 
         return BookingMapper.toBookingDto(bookingRepository.save(booking));
     }
@@ -147,11 +141,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void validateDates(LocalDateTime start, LocalDateTime end) {
-        if (start == null || end == null || !end.isAfter(start)) {
+        if (!end.isAfter(start)) {
             throw new BadRequestException(BOOKING_DATE_INVALID_MESSAGE);
-        }
-        if (start.isBefore(LocalDateTime.now())) {
-            throw new BadRequestException(BOOKING_START_INVALID_MESSAGE);
         }
     }
 
