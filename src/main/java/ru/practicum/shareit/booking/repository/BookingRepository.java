@@ -1,9 +1,13 @@
 package ru.practicum.shareit.booking.repository;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.item.model.Item;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +39,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByItem_Owner_IdAndStartAfter(Long ownerId, LocalDateTime start, Sort sort);
 
     List<Booking> findByItem_Owner_IdAndStatus(Long ownerId, BookingStatus status, Sort sort);
+
+    @EntityGraph(attributePaths = "booker")
+    @Query("""
+            select b
+            from Booking b
+            where b.item in :items
+              and b.status = ru.practicum.shareit.booking.model.BookingStatus.APPROVED
+            order by b.start asc
+            """)
+    List<Booking> findApprovedByItemInOrderByStartAsc(@Param("items") List<Item> items);
 
     Optional<Booking> findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(Long itemId,
                                                                             BookingStatus status,

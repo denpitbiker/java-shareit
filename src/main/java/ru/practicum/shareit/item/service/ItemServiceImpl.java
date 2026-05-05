@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
@@ -101,11 +102,15 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto getById(Long itemId, Long userId) {
         log.info(LOG_GET_ITEM, itemId);
         Item item = getItemOrThrow(itemId);
-        List<CommentDto> comments = commentRepository.findByItem_IdOrderByCreatedAsc(itemId)
-                .stream()
-                .map(CommentMapper::toCommentDto)
-                .toList();
-        return toDetailedItemDto(item, userId, comments);
+        Map<Long, List<CommentDto>> commentsByItemId = getCommentsByItemId(List.of(item));
+
+        Map<Long, List<BookingDto>> bookingsByItemId = getBookingsByItemId(List.of(item));
+        return toDetailedItemDto(
+                item,
+                userId,
+                commentsByItemId.getOrDefault(item.getId(), List.of()),
+                bookingsByItemId.getOrDefault(item.getId(), List.of())
+        );
     }
 
     @Override
@@ -114,11 +119,17 @@ public class ItemServiceImpl implements ItemService {
         log.info(LOG_GET_OWNER_ITEMS, userId);
         getUserOrThrow(userId);
         List<Item> items = itemRepository.findByOwner_IdOrderByIdAsc(userId);
+        Map<Long, List<BookingDto>> bookingsByItemId = getBookingsByItemId(items);
         Map<Long, List<CommentDto>> commentsByItemId = getCommentsByItemId(items);
 
         return items
                 .stream()
-                .map(item -> toDetailedItemDto(item, userId, commentsByItemId.getOrDefault(item.getId(), List.of())))
+                .map(item -> toDetailedItemDto(
+                        item,
+                        userId,
+                        commentsByItemId.getOrDefault(item.getId(), List.of()),
+                        bookingsByItemId.getOrDefault(item.getId(), List.of())
+                ))
                 .toList();
     }
 
@@ -195,27 +206,23 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
-    private ItemDto toDetailedItemDto(Item item, Long userId, List<CommentDto> comments) {
+    private ItemDto toDetailedItemDto(Item item, Long userId, List<CommentDto> comments, List<BookingDto> bookings) {
         ItemDto itemDto = ItemMapper.toItemDto(item);
         itemDto.setComments(comments);
-        if (item.getOwner() != null && item.getOwner().getId().equals(userId)) {
-            LocalDateTime now = LocalDateTime.now();
-            bookingRepository.findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(
-                            item.getId(),
-                            BookingStatus.APPROVED,
-                            now
-                    )
-                    .map(BookingMapper::toBookingShortDto)
-                    .ifPresent(itemDto::setLastBooking);
-            bookingRepository.findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
-                            item.getId(),
-                            BookingStatus.APPROVED,
-                            now
-                    )
-                    .map(BookingMapper::toBookingShortDto)
-                    .ifPresent(itemDto::setNextBooking);
+        if (item.getOwner() != null && item.getOwner().getId().equals(userId) && !bookings.isEmpty()) {
+            itemDto.setNextBooking(BookingMapper.toBookingShortDto(bookings.getFirst()));
+            itemDto.setLastBooking(BookingMapper.toBookingShortDto(bookings.getLast()));
         }
         return itemDto;
+    }
+
+    private Map<Long, List<BookingDto>> getBookingsByItemId(List<Item> items) {
+        return bookingRepository.findApprovedByItemInOrderByStartAsc(items)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        booking -> booking.getItem().getId(),
+                        Collectors.mapping(BookingMapper::toBookingDto, Collectors.toList())
+                ));
     }
 
     private Map<Long, List<CommentDto>> getCommentsByItemId(List<Item> items) {

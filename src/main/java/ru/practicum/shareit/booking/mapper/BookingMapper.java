@@ -39,7 +39,7 @@ public class BookingMapper {
                 .build();
     }
 
-    public static BookingShortDto toBookingShortDto(Booking booking) {
+    public static BookingShortDto toBookingShortDto(BookingDto booking) {
         if (booking == null) {
             return null;
         }
