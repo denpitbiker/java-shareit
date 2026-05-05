@@ -11,9 +11,15 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import ru.practicum.shareit.ShareItApp;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -24,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static ru.practicum.shareit.TestStubs.NON_EXISTING_ID;
 import static ru.practicum.shareit.TestStubs.SEARCH_TEXT_BLANK;
 import static ru.practicum.shareit.TestStubs.SEARCH_TEXT_MATCH;
+import static ru.practicum.shareit.TestStubs.VALID_COMMENT_TEXT;
 import static ru.practicum.shareit.TestStubs.UPDATED_ITEM_NAME;
 import static ru.practicum.shareit.TestStubs.USER_ID_HEADER;
 import static ru.practicum.shareit.TestStubs.VALID_ITEM_DTO_1;
@@ -50,6 +57,15 @@ public class ItemControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ItemRepository itemRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ru.practicum.shareit.booking.repository.BookingRepository bookingRepository;
 
     @Test
     @DisplayName("Create valid item")
@@ -101,6 +117,49 @@ public class ItemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath(NAME_FIELD).value(VALID_ITEM_NAME_1));
+    }
+
+    @Test
+    @DisplayName("Add comment to item")
+    public void post_addComment_success200() throws Exception {
+        UserDto owner = extractUserDto(createUser(VALID_USER_DTO_1));
+        UserDto booker = extractUserDto(createUser(VALID_USER_DTO_2));
+        ItemDto createdItem = extractItemDto(createItem(owner.getId(), VALID_ITEM_DTO_1));
+        addCompletedBooking(booker.getId(), createdItem.getId());
+
+        mvc.perform(post(ITEM_ROUTE + "/comment", createdItem.getId())
+                        .header(USER_ID_HEADER, booker.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CommentDto(null, VALID_COMMENT_TEXT, null, null))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.text").value(VALID_COMMENT_TEXT))
+                .andExpect(jsonPath("$.authorName").value(VALID_USER_DTO_2.getName()));
+    }
+
+    @Test
+    @DisplayName("Get item with owner details")
+    public void get_existingItemAsOwner_includesBookingsAndComments() throws Exception {
+        UserDto owner = extractUserDto(createUser(VALID_USER_DTO_1));
+        UserDto booker = extractUserDto(createUser(VALID_USER_DTO_2));
+        ItemDto createdItem = extractItemDto(createItem(owner.getId(), VALID_ITEM_DTO_1));
+        addCompletedBooking(booker.getId(), createdItem.getId());
+        addFutureBooking(booker.getId(), createdItem.getId());
+
+        mvc.perform(post(ITEM_ROUTE + "/comment", createdItem.getId())
+                        .header(USER_ID_HEADER, booker.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CommentDto(null, VALID_COMMENT_TEXT, null, null))))
+                .andExpect(status().isOk());
+
+        mvc.perform(get(ITEM_ROUTE, createdItem.getId())
+                        .header(USER_ID_HEADER, owner.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.lastBooking.id").isNotEmpty())
+                .andExpect(jsonPath("$.nextBooking.id").isNotEmpty())
+                .andExpect(jsonPath("$.comments", hasSize(1)))
+                .andExpect(jsonPath("$.comments[0].text").value(VALID_COMMENT_TEXT));
     }
 
     @Test
@@ -175,4 +234,25 @@ public class ItemControllerTest {
         String content = resultActions.andReturn().getResponse().getContentAsString();
         return objectMapper.readValue(content, ItemDto.class);
     }
+
+    private void addCompletedBooking(Long bookerId, Long itemId) {
+        itemRepository.findById(itemId).ifPresent(item -> bookingRepository.save(Booking.builder()
+                .start(LocalDateTime.now().minusDays(4))
+                .end(LocalDateTime.now().minusDays(2))
+                .item(item)
+                .booker(userRepository.findById(bookerId).orElseThrow())
+                .status(BookingStatus.APPROVED)
+                .build()));
+    }
+
+    private void addFutureBooking(Long bookerId, Long itemId) {
+        itemRepository.findById(itemId).ifPresent(item -> bookingRepository.save(Booking.builder()
+                .start(LocalDateTime.now().plusDays(1))
+                .end(LocalDateTime.now().plusDays(2))
+                .item(item)
+                .booker(userRepository.findById(bookerId).orElseThrow())
+                .status(BookingStatus.APPROVED)
+                .build()));
+    }
+
 }
