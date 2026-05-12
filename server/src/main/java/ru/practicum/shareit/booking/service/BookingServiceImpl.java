@@ -35,8 +35,6 @@ public class BookingServiceImpl implements BookingService {
     private static final String USER_NOT_FOUND_MESSAGE = "User not found";
     private static final String ITEM_NOT_FOUND_MESSAGE = "Item not found";
     private static final String BOOKING_NOT_FOUND_MESSAGE = "Booking not found";
-    private static final String BOOKING_DATE_INVALID_MESSAGE = "Booking end must be after start";
-    private static final String BOOKING_START_INVALID_MESSAGE = "Booking start must be in the present or future";
     private static final String ITEM_UNAVAILABLE_MESSAGE = "Item is unavailable";
     private static final String OWNER_BOOKING_MESSAGE = "Item owner cannot book own item";
     private static final String OWNER_APPROVAL_ONLY_MESSAGE = "Only item owner can approve booking";
@@ -60,7 +58,6 @@ public class BookingServiceImpl implements BookingService {
         if (!Boolean.TRUE.equals(item.getAvailable())) {
             throw new BadRequestException(ITEM_UNAVAILABLE_MESSAGE);
         }
-        validateDates(bookingDto.getStart(), bookingDto.getEnd());
 
         Booking booking = BookingMapper.toBooking(bookingDto, booker, item, BookingStatus.WAITING);
 
@@ -138,12 +135,6 @@ public class BookingServiceImpl implements BookingService {
         return bookings.stream()
                 .map(BookingMapper::toBookingDto)
                 .toList();
-    }
-
-    private void validateDates(LocalDateTime start, LocalDateTime end) {
-        if (!end.isAfter(start)) {
-            throw new BadRequestException(BOOKING_DATE_INVALID_MESSAGE);
-        }
     }
 
     private User getUserOrThrowBadRequest(Long userId) {

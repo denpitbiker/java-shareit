@@ -25,7 +25,6 @@ import java.util.List;
 
 import static ru.practicum.shareit.TestStubs.NON_EXISTING_ID;
 import static ru.practicum.shareit.TestStubs.VALID_COMMENT_TEXT;
-import static ru.practicum.shareit.TestStubs.SEARCH_TEXT_BLANK;
 import static ru.practicum.shareit.TestStubs.SEARCH_TEXT_MATCH;
 import static ru.practicum.shareit.TestStubs.UPDATED_ITEM_DESCRIPTION;
 import static ru.practicum.shareit.TestStubs.UPDATED_ITEM_NAME;
@@ -146,17 +145,6 @@ public class ItemServiceImplTest {
 
         Assertions.assertEquals(1, searchResult.size(), "Expected one matching item");
         Assertions.assertEquals(VALID_ITEM_NAME_1, searchResult.getFirst().getName(), "Expected drill to be found");
-    }
-
-    @Test
-    @DisplayName("Search with blank text")
-    public void search_blankText_emptyResultReturned() {
-        UserDto owner = userService.create(new UserDto(null, VALID_USER_DTO_1.getName(), VALID_USER_DTO_1.getEmail()));
-        itemService.create(owner.getId(), VALID_ITEM_DTO_1);
-
-        List<ItemDto> searchResult = itemService.search(SEARCH_TEXT_BLANK);
-
-        Assertions.assertTrue(searchResult.isEmpty(), "Expected empty result for blank search");
     }
 
     @Test

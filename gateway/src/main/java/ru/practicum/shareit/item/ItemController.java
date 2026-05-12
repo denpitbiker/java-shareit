@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
+import java.util.List;
+
 import static ru.practicum.shareit.common.Header.USER_ID_HEADER;
 
 @RestController
@@ -49,6 +51,9 @@ public class ItemController {
 
     @GetMapping("/search")
     public ResponseEntity<Object> search(@RequestParam String text) {
+        if (text == null || text.isBlank()) {
+            return ResponseEntity.accepted().body(List.of());
+        }
         return itemClient.search(text);
     }
 

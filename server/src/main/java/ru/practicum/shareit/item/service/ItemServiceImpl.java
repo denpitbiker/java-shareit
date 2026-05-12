@@ -46,7 +46,6 @@ public class ItemServiceImpl implements ItemService {
     private static final String LOG_GET_ITEM = "Getting item in service by itemId={}";
     private static final String LOG_GET_OWNER_ITEMS = "Getting owner items in service for userId={}";
     private static final String LOG_SEARCH_ITEMS = "Searching items in service by text='{}'";
-    private static final String LOG_BLANK_SEARCH = "Search text is blank, returning empty result";
     private static final String LOG_USER_NOT_FOUND = "User not found for userId={}";
     private static final String LOG_ITEM_NOT_FOUND = "Item not found for itemId={}";
     private static final String LOG_OWNER_VALIDATION_FAILED = "UserId={} is not owner of itemId={}";
@@ -137,10 +136,6 @@ public class ItemServiceImpl implements ItemService {
     @Transactional(readOnly = true)
     public List<ItemDto> search(String text) {
         log.info(LOG_SEARCH_ITEMS, text);
-        if (text == null || text.isBlank()) {
-            log.info(LOG_BLANK_SEARCH);
-            return List.of();
-        }
         return itemRepository.search(text.trim())
                 .stream()
                 .map(ItemMapper::toItemDto)

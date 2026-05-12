@@ -39,11 +39,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemRequestDto create(Long userId, ItemRequestDto requestDto) {
         log.info(LOG_CREATE_REQUEST, userId, requestDto);
         User requestor = getUserOrThrow(userId);
-        ItemRequest request = ItemRequest.builder()
-                .description(requestDto.getDescription())
-                .requestor(requestor)
-                .created(LocalDateTime.now())
-                .build();
+        ItemRequest request = ItemRequestMapper.toItem(requestDto, requestor, LocalDateTime.now());
         return ItemRequestMapper.toDto(itemRequestRepository.save(request), List.of());
     }
 

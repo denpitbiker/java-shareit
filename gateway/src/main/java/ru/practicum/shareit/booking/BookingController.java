@@ -3,6 +3,7 @@ package ru.practicum.shareit.booking;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,12 +27,16 @@ import static ru.practicum.shareit.common.Header.USER_ID_HEADER;
 public class BookingController {
     private static final String DEFAULT_STATE = "ALL";
     private static final String UNKNOWN_STATE_ERR_MSG = "Unknown state: ";
+    private static final String BOOKING_DATE_INVALID_MESSAGE = "Booking end must be after start";
 
     private final BookingClient bookingClient;
 
     @PostMapping
     public ResponseEntity<Object> create(@RequestHeader(USER_ID_HEADER) long userId,
-                                         @RequestBody @Valid BookItemRequestDto requestDto) {
+                                         @RequestBody @Valid BookItemRequestDto requestDto) throws BadRequestException {
+        if (!requestDto.getEnd().isAfter(requestDto.getStart())) {
+            throw new BadRequestException(BOOKING_DATE_INVALID_MESSAGE);
+        }
         return bookingClient.create(userId, requestDto);
     }
 
